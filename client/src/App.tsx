@@ -4,32 +4,26 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { Layout } from "@/components/Layout";
-import { AuthProvider } from "@/lib/auth-context";
-import HomePage from "@/pages/home";
-import BrowsePage from "@/pages/browse";
-import SkillDetailPage from "@/pages/skill-detail";
-import SubmitGuidePage from "@/pages/submit-guide";
 import NotFound from "@/pages/not-found";
-import CreatorDashboardPage from "@/pages/creator-dashboard";
-import CreatorLoginPage from "@/pages/creator-login";
-import BuyerLibraryPage from "@/pages/buyer-library";
+
+function Placeholder() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
+      <h1 className="text-2xl font-semibold">HermesHub — ARD Work Board</h1>
+      <p className="max-w-md text-muted-foreground">
+        The ARD-compatible agent work board is being rebuilt. The schema, capability
+        taxonomy, and settlement libraries are in place; the UI ships in a later phase.
+      </p>
+    </main>
+  );
+}
 
 function AppRoutes() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={HomePage} />
-        <Route path="/browse" component={BrowsePage} />
-        <Route path="/browse/:category" component={BrowsePage} />
-        <Route path="/skill/:name" component={SkillDetailPage} />
-        <Route path="/submit" component={SubmitGuidePage} />
-        <Route path="/creator/dashboard" component={CreatorDashboardPage} />
-        <Route path="/creator/login" component={CreatorLoginPage} />
-        <Route path="/library" component={BuyerLibraryPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/" component={Placeholder} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
@@ -37,12 +31,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <Router hook={useHashLocation}>
-            <AppRoutes />
-          </Router>
-          <Toaster />
-        </AuthProvider>
+        <Router hook={useHashLocation}>
+          <AppRoutes />
+        </Router>
+        <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   );
