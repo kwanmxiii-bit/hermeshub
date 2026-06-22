@@ -34,7 +34,7 @@ export default withHandler({
       throw new ApiError("UNAUTHORIZED", "signature timestamp outside allowed window");
     }
     const message = canonicalize({
-      agent_did: agent.didWeb,
+      agent_urn: agent.urnAir,
       capability_uri: input.capabilityUri,
       nonce: input.nonce,
       ts: input.ts,

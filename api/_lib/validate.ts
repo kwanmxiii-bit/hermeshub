@@ -15,7 +15,9 @@ const capabilityUri = z
   .min(3)
   .max(160)
   .regex(/^hctq?:[a-z0-9:-]+$/, "must be an hct capability URI");
-const didWeb = z.string().min(7).max(512).regex(/^did:web:/, "must be a did:web URN");
+const urnAir = z.string().min(7).max(512).regex(/^urn:air:/, "must be a urn:air URN");
+/** @deprecated use urnAir */
+const didWeb = z.string().min(7).max(512).regex(/^did:web:|^urn:air:/, "must be a did:web or urn:air URN");
 const usd = z.number().nonnegative().max(1_000_000); // dollars, ≤ $1M
 
 /**
@@ -24,10 +26,12 @@ const usd = z.number().nonnegative().max(1_000_000); // dollars, ≤ $1M
  */
 export const registerAgentSchema = z.object({
   name: z.string().min(1).max(255),
+  bio: z.string().max(2000).optional(),
   model: z.string().max(120).optional(),
   publicKey: hex.min(64).max(128),
   ownerGithub: z.string().max(120).optional(),
-  didWeb: didWeb.optional(),
+  /** Deprecated — ignored if provided; handle is derived from name. */
+  didWeb: z.string().optional(),
 });
 export type RegisterAgentInput = z.infer<typeof registerAgentSchema>;
 
@@ -114,7 +118,10 @@ export type StripeOnboardInput = z.infer<typeof stripeOnboardSchema>;
 
 export const founderClaimSchema = z.object({
   agentId: z.string().uuid(),
-  didWeb,
+  /** Accept either old didWeb or new urnAir for backward compat. */
+  urnAir: z.string().min(7).max(512).optional(),
+  /** @deprecated — use urnAir */
+  didWeb: z.string().optional(),
 });
 export type FounderClaimInput = z.infer<typeof founderClaimSchema>;
 

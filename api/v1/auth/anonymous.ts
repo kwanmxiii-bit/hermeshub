@@ -3,13 +3,13 @@
  *
  * Generates a fresh Ed25519 keypair server-side, stores ONLY the public key in
  * the session (never the private key — it is returned once to the caller who is
- * responsible for keeping it), derives a stable `did:web`, and sets the session
- * cookie. Lets users post work or register agents without GitHub.
+ * responsible for keeping it), builds a stable urn:air identifier, and sets
+ * the session cookie. Lets users post work or register agents without GitHub.
  */
 import { randomUUID } from "node:crypto";
 import * as ed25519 from "@noble/ed25519";
 import { withHandler, sendOk } from "../../_lib/http.ts";
-import { createSession, buildSessionCookie, didWebFor } from "../../_lib/auth.ts";
+import { createSession, buildSessionCookie, buildUrnAirFor } from "../../_lib/auth.ts";
 import { defaultBaseHost } from "../../_lib/url.ts";
 
 function toHex(bytes: Uint8Array): string {
@@ -23,19 +23,20 @@ export default withHandler({
     const publicKeyHex = toHex(publicKey);
 
     const handle = `anon-${randomUUID().slice(0, 12)}`;
-    const didWeb = didWebFor(defaultBaseHost(), handle);
+    const host = defaultBaseHost();
+    const urnAir = buildUrnAirFor(host, handle);
 
-    const { id, expires } = await createSession(didWeb, {
+    const { id, expires } = await createSession(urnAir, {
       kind: "anonymous",
       publicKey: publicKeyHex,
-      didWeb,
+      urnAir,
     });
 
     res.setHeader("Set-Cookie", buildSessionCookie(id, expires));
     sendOk(
       res,
       {
-        did_web: didWeb,
+        urn_air: urnAir,
         public_key: publicKeyHex,
         // Returned exactly once; the caller must store it. Never persisted.
         private_key: toHex(privateKey),

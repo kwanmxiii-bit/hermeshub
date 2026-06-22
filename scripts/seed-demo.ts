@@ -2,13 +2,12 @@
  * Seed demo data for HermesHub: worker agents, declared capabilities, open work
  * requests, and a few claimed Founder-500 slots.
  *
- * Idempotent: agents are keyed by `did_web`, capability declarations by
- * (agent, capability), work requests by a deterministic `public_id`, and
- * founder slots by `slot_number`. Re-running never duplicates rows.
+ * Idempotent: agents are keyed by `handle` (urn:air slug), capability
+ * declarations by (agent, capability), work requests by a deterministic
+ * `public_id`, and founder slots by `slot_number`. Re-running never duplicates.
  *
  * Stripe Connect is intentionally skipped — the platform's Connect application
- * is pending approval, so we leave `stripe_accounts` empty. Workers can declare
- * capabilities and accept bids; payouts light up once Connect is enabled.
+ * is pending approval, so we leave `stripe_accounts` empty.
  *
  * Usage:
  *   DATABASE_URL=$(cat /home/user/workspace/.hermeshub_db_uri.txt) \
@@ -24,8 +23,10 @@ import {
   requesters,
   work_requests,
   founder_spots,
+  capabilities,
 } from "../shared/schema.ts";
-import { capabilities } from "../shared/schema.ts";
+
+const PUBLISHER_DOMAIN = "hermeshub.xyz";
 
 function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
@@ -43,9 +44,14 @@ async function newKeypair(): Promise<{ publicKey: string }> {
   return { publicKey: toHex(pub) };
 }
 
+function buildUrnAir(handle: string): string {
+  return `urn:air:${PUBLISHER_DOMAIN}:agent:${handle}`;
+}
+
 interface SeedAgent {
   slug: string;
   name: string;
+  bio: string;
   model: string;
   domain: string;
   capabilityUris: string[];
@@ -57,6 +63,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "lumen-cut",
     name: "Lumen Cut",
+    bio: "Professional video editing agent specializing in short-form content, color grading, and caption generation for social media and marketing teams.",
     model: "gpt-4o",
     domain: "video",
     capabilityUris: [
@@ -69,6 +76,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "reel-forge",
     name: "ReelForge",
+    bio: "Short-form video editing and motion graphics agent for YouTube Shorts, Instagram Reels, and TikTok creators.",
     model: "claude-sonnet-4",
     domain: "video",
     capabilityUris: ["hct:video:edit:short-form", "hct:video:animation:motion-graphics"],
@@ -77,6 +85,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "echo-master",
     name: "EchoMaster",
+    bio: "Audio mastering and podcast production agent. Handles noise reduction, level matching, and broadcast-quality masters from raw WAV files.",
     model: "gpt-4o-mini",
     domain: "audio",
     capabilityUris: ["hct:audio:edit:master", "hct:audio:edit:denoise", "hct:audio:podcast:mix"],
@@ -85,6 +94,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "wavewright",
     name: "WaveWright",
+    bio: "Voice synthesis and podcast post-production agent. Generates show notes, chapter markers, and TTS narration.",
     model: "claude-haiku-4",
     domain: "audio",
     capabilityUris: ["hct:audio:voice-clone:tts", "hct:audio:podcast:show-notes"],
@@ -93,6 +103,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "pixel-smith",
     name: "PixelSmith",
+    bio: "AI image generation and photo retouching agent. Creates product imagery, marketing assets, and high-res upscales.",
     model: "gpt-4o",
     domain: "image",
     capabilityUris: [
@@ -105,6 +116,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "canvas-bot",
     name: "CanvasBot",
+    bio: "Logo design and background removal agent. Delivers brand identity concepts and clean transparent PNGs for print and web.",
     model: "gemini-2-flash",
     domain: "image",
     capabilityUris: ["hct:image:logo:concept", "hct:image:edit:bg-remove"],
@@ -113,6 +125,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "compile-cat",
     name: "CompileCat",
+    bio: "Full-stack feature development and security review agent. Writes TypeScript/Python, reviews for OWASP top-10, and ships test coverage.",
     model: "claude-opus-4",
     domain: "code",
     capabilityUris: ["hct:code:write:feature", "hct:code:review:security", "hct:code:test:unit"],
@@ -121,6 +134,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "refactor-rover",
     name: "RefactorRover",
+    bio: "Code refactoring and bug-fix agent. Modernizes legacy codebases, reduces technical debt, and resolves production issues.",
     model: "gpt-4o",
     domain: "code",
     capabilityUris: ["hct:code:refactor:module", "hct:code:fix:bug"],
@@ -129,6 +143,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "deep-scholar",
     name: "DeepScholar",
+    bio: "Research synthesis and competitive landscape agent. Produces cited literature reviews and market briefings for strategy teams.",
     model: "claude-opus-4",
     domain: "research",
     capabilityUris: [
@@ -140,6 +155,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "rank-rise",
     name: "RankRise",
+    bio: "Technical SEO audit and keyword research agent. Delivers crawlability reports, Core Web Vitals analysis, and prioritized fix lists.",
     model: "gpt-4o-mini",
     domain: "seo",
     capabilityUris: ["hct:seo:audit:technical", "hct:seo:keyword:research"],
@@ -148,6 +164,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "wordwell",
     name: "WordWell",
+    bio: "Long-form blog writing and ad copywriting agent. Produces SEO-optimized articles and high-converting ad copy.",
     model: "claude-sonnet-4",
     domain: "writing",
     capabilityUris: ["hct:writing:longform:blog", "hct:writing:copy:ad"],
@@ -156,6 +173,7 @@ const SEED_AGENTS: SeedAgent[] = [
   {
     slug: "data-delver",
     name: "DataDelver",
+    bio: "Data deduplication, schema transformation, and PDF extraction agent. Cleans messy datasets and extracts structured data from documents.",
     model: "gpt-4o",
     domain: "data",
     capabilityUris: ["hct:data:dedupe:semantic", "hct:data:transform:schema", "hct:data:extract:pdf"],
@@ -241,8 +259,6 @@ const SEED_WORK: SeedWork[] = [
   },
 ];
 
-const DEMO_REQUESTER_DID = "did:web:hermeshub.xyz:requesters:demo";
-
 function deterministicPublicId(key: string): string {
   // Stable 12-char hex derived from the seed key, so re-runs target the same row.
   let h = 0x811c9dc5;
@@ -270,35 +286,34 @@ async function main() {
     );
   }
 
-  // Filter declared capabilities to ones that actually exist in the taxonomy,
-  // so the seed is resilient to leaf-name drift.
+  // Filter declared capabilities to ones that actually exist in the taxonomy.
   const allUris = new Set(
     (await db.select({ uri: capabilities.uri }).from(capabilities)).map((r) => r.uri),
   );
 
-  // 1) Demo requester (owns all seed work).
+  // 1) Demo requester — keyed by name to avoid the removed did_web column.
   const existingReq = await db
     .select({ id: requesters.id })
     .from(requesters)
-    .where(eq(requesters.didWeb, DEMO_REQUESTER_DID))
+    .where(eq(requesters.name, "HermesHub Demo"))
     .limit(1);
   let requesterId = existingReq[0]?.id;
   if (!requesterId) {
     const ins = await db
       .insert(requesters)
-      .values({ didWeb: DEMO_REQUESTER_DID, name: "HermesHub Demo" })
+      .values({ name: "HermesHub Demo" })
       .returning({ id: requesters.id });
     requesterId = ins[0].id;
   }
 
-  // 2) Agents + capability declarations.
+  // 2) Agents + capability declarations — keyed by urn_air handle.
   const agentIdBySlug = new Map<string, string>();
   for (const a of SEED_AGENTS) {
-    const did = `did:web:hermeshub.xyz:agents:${a.slug}`;
+    const urnAir = buildUrnAir(a.slug);
     const existing = await db
       .select({ id: agents.id })
       .from(agents)
-      .where(eq(agents.didWeb, did))
+      .where(eq(agents.handle, a.slug))
       .limit(1);
 
     let agentId = existing[0]?.id;
@@ -307,8 +322,11 @@ async function main() {
       const ins = await db
         .insert(agents)
         .values({
-          didWeb: did,
+          urnAir,
+          handle: a.slug,
+          publisherDomain: PUBLISHER_DOMAIN,
           name: a.name,
+          bio: a.bio,
           model: a.model,
           publicKey,
           verified: true,
@@ -364,7 +382,7 @@ async function main() {
     const slotNumber = i + 1;
     const slug = founderSlugs[i];
     const agentId = agentIdBySlug.get(slug)!;
-    const did = `did:web:hermeshub.xyz:agents:${slug}`;
+    const urnAir = buildUrnAir(slug);
     const existing = await db
       .select({ id: founder_spots.id })
       .from(founder_spots)
@@ -375,7 +393,7 @@ async function main() {
       .insert(founder_spots)
       .values({
         agentId,
-        didWeb: did,
+        urnAir,
         slotNumber,
         status: "active",
         activatedAt: new Date(),

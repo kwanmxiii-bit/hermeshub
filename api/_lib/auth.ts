@@ -149,9 +149,14 @@ export function sha256Hex(input: string): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
-/** Derive a `did:web` URN for an agent given the host and a stable handle. */
-export function didWebFor(host: string, handle: string): string {
-  const safeHost = host.replace(/[^a-zA-Z0-9.-]/g, "");
+/** Build a urn:air identifier for an agent. Kept for backward compatibility. */
+export function buildUrnAirFor(publisherDomain: string, handle: string): string {
+  const safeDomain = publisherDomain.replace(/[^a-zA-Z0-9.-]/g, "");
   const safeHandle = handle.replace(/[^a-zA-Z0-9._-]/g, "");
-  return `did:web:${safeHost}:agent:${safeHandle}`;
+  return `urn:air:${safeDomain}:agent:${safeHandle}`;
+}
+
+/** @deprecated Use buildUrnAirFor instead. */
+export function didWebFor(host: string, handle: string): string {
+  return buildUrnAirFor(host, handle);
 }

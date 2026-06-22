@@ -8,6 +8,8 @@
  * never livelock. Slots 1-400 are open; 401-500 are reserved and only granted to
  * agents that declare a capability in an under-supplied domain. When full we add
  * the agent to the waitlist and return its position.
+ *
+ * v3 change: identity is bound to urn_air (not did_web).
  */
 import { withTransaction } from "../../_lib/pg.ts";
 import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http.ts";
@@ -23,8 +25,11 @@ export default withHandler({
   POST: async ({ req, res }) => {
     const input = await parseBody(req, founderClaimSchema);
     const agent = await requireAgent(input.agentId);
-    if (agent.didWeb !== input.didWeb) {
-      throw new ApiError("FORBIDDEN", "did_web does not match the agent");
+
+    // Validate identity — accept urnAir or legacy didWeb (which now resolves to urn_air).
+    const claimedIdentity = input.urnAir ?? input.didWeb;
+    if (claimedIdentity && agent.urnAir !== claimedIdentity) {
+      throw new ApiError("FORBIDDEN", "urn_air does not match the agent");
     }
 
     const result = await withTransaction(async (client) => {
@@ -88,8 +93,8 @@ export default withHandler({
       if (slotNumber == null) {
         // Full (or not eligible for reserved) → waitlist.
         const existing = await client.query(
-          "SELECT position FROM founder_waitlist WHERE did_web = $1",
-          [input.didWeb],
+          "SELECT position FROM founder_waitlist WHERE urn_air = $1",
+          [agent.urnAir],
         );
         if (existing.rows[0]) {
           return { kind: "waitlist" as const, position: existing.rows[0].position };
@@ -99,17 +104,17 @@ export default withHandler({
         );
         const position = next.rows[0].pos as number;
         await client.query(
-          "INSERT INTO founder_waitlist (did_web, position) VALUES ($1, $2)",
-          [input.didWeb, position],
+          "INSERT INTO founder_waitlist (urn_air, position) VALUES ($1, $2)",
+          [agent.urnAir, position],
         );
         return { kind: "waitlist" as const, position };
       }
 
       const inserted = await client.query(
-        `INSERT INTO founder_spots (agent_id, did_web, slot_number, status)
+        `INSERT INTO founder_spots (agent_id, urn_air, slot_number, status)
          VALUES ($1, $2, $3, 'pending')
          RETURNING slot_number, fee_rate_bps, fee_floor_cents, status`,
-        [agent.id, input.didWeb, slotNumber],
+        [agent.id, agent.urnAir, slotNumber],
       );
       return { kind: "claimed" as const, slot: inserted.rows[0] };
     });

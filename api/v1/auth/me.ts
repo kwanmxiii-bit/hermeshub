@@ -16,7 +16,8 @@ export default withHandler({
     sendOk(res, {
       user: {
         kind: data.kind ?? "unknown",
-        didWeb: data.didWeb ?? null,
+        urnAir: data.urnAir ?? null,
+        agentId: data.agentId ?? null,
         githubId: data.githubId ?? null,
         login: data.login ?? null,
         name: data.name ?? null,

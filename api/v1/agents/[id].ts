@@ -1,7 +1,9 @@
 /**
  * GET /api/v1/agents/[id] — agent profile.
  *
- * `id` may be the primary UUID, the stable `agent_id` UUID, or the `did_web`.
+ * `id` may be the primary UUID, the stable `agent_id` UUID, the `urn_air`
+ * (urn:air:hermeshub.xyz:agent:<handle>), or the handle slug.
+ *
  * Returns the agent plus its declared capabilities, founder status, and Stripe
  * payability flags (so the UI can show onboarding state).
  */
@@ -59,13 +61,17 @@ export default withHandler({
       agent: {
         id: agent.id,
         agentId: agent.agentId,
-        didWeb: agent.didWeb,
+        urnAir: agent.urnAir,
+        handle: agent.handle,
+        publisherDomain: agent.publisherDomain,
         name: agent.name,
+        bio: agent.bio,
         model: agent.model,
         ownerGithub: agent.ownerGithub,
         verified: agent.verified,
         trustScore: agent.trustScore,
         publicKey: agent.publicKey,
+        updatedAt: agent.updatedAt,
         createdAt: agent.createdAt,
       },
       capabilities: caps,

@@ -1,19 +1,23 @@
 /**
  * POST /api/v1/agents/register — create a worker agent.
  *
- * Body: { name, model?, public_key, owner_github?, did_web? }. The public key
- * must be a valid 32-byte Ed25519 key (validated by decompressing it to a curve
- * point). When `did_web` is omitted we derive it from a slug of the name plus a
- * short random suffix so it is unique and url-safe.
+ * Body: { name, bio?, model?, public_key, owner_github? }. The public key
+ * must be a valid 32-byte Ed25519 key. A handle is derived from the name and
+ * made unique with a short random suffix if needed. The urn_air identifier is
+ * built as urn:air:hermeshub.xyz:agent:<handle>.
+ *
+ * `did_web` in the body is accepted but silently ignored (deprecated, removed
+ * in schema v3 ARD hard cutover).
  */
 import { randomUUID } from "node:crypto";
 import * as ed25519 from "@noble/ed25519";
+import { eq } from "drizzle-orm";
 import { getDb } from "../../_lib/db.ts";
 import { agents } from "../../../shared/schema.ts";
 import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http.ts";
 import { registerAgentSchema } from "../../_lib/validate.ts";
 import { defaultBaseHost } from "../../_lib/url.ts";
-import { didWebFor } from "../../_lib/auth.ts";
+import { handleFromName, buildUrnAir } from "../../_lib/entities.ts";
 
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
@@ -33,14 +37,19 @@ function isValidEd25519PublicKey(hex: string): boolean {
   }
 }
 
-function slugify(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 48) || "agent"
-  );
+/** Ensure handle uniqueness by appending -2, -3, ... if collisions exist. */
+async function resolveUniqueHandle(baseHandle: string): Promise<string> {
+  const db = getDb();
+  const existing = await db
+    .select({ handle: agents.handle })
+    .from(agents)
+    .where(eq(agents.handle, baseHandle))
+    .limit(1);
+  if (!existing[0]) return baseHandle;
+
+  // Try with a short random suffix.
+  const candidate = `${baseHandle.slice(0, 90)}-${randomUUID().slice(0, 8)}`;
+  return candidate;
 }
 
 export default withHandler({
@@ -51,25 +60,46 @@ export default withHandler({
       throw new ApiError("VALIDATION", "public_key is not a valid Ed25519 public key");
     }
 
-    const host = defaultBaseHost();
-    const didWeb = input.didWeb ?? didWebFor(host, `${slugify(input.name)}-${randomUUID().slice(0, 8)}`);
+    const publisherDomain = defaultBaseHost();
+    const baseHandle = handleFromName(input.name);
+    const handle = await resolveUniqueHandle(baseHandle);
+    const urnAir = buildUrnAir(handle, publisherDomain);
 
     const db = getDb();
     try {
       const inserted = await db
         .insert(agents)
         .values({
-          didWeb,
+          urnAir,
+          handle,
+          publisherDomain,
           name: input.name,
+          bio: input.bio,
           model: input.model,
           ownerGithub: input.ownerGithub,
           publicKey: input.publicKey,
         })
         .returning();
-      sendOk(res, { agent: inserted[0] }, 201);
+
+      const agent = inserted[0];
+      sendOk(res, {
+        agent: {
+          id: agent.id,
+          agentId: agent.agentId,
+          urnAir: agent.urnAir,
+          handle: agent.handle,
+          name: agent.name,
+          bio: agent.bio,
+          model: agent.model,
+          ownerGithub: agent.ownerGithub,
+          verified: agent.verified,
+          trustScore: agent.trustScore,
+          createdAt: agent.createdAt,
+        },
+      }, 201);
     } catch (err) {
       if (err instanceof Error && /unique|duplicate/i.test(err.message)) {
-        throw new ApiError("CONFLICT", "an agent with this did_web already exists");
+        throw new ApiError("CONFLICT", "an agent with this identifier already exists");
       }
       throw err;
     }
