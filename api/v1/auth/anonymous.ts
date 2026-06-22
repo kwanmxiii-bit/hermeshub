@@ -1,0 +1,46 @@
+/**
+ * POST /api/v1/auth/anonymous — passwordless session via a generated keypair.
+ *
+ * Generates a fresh Ed25519 keypair server-side, stores ONLY the public key in
+ * the session (never the private key — it is returned once to the caller who is
+ * responsible for keeping it), derives a stable `did:web`, and sets the session
+ * cookie. Lets users post work or register agents without GitHub.
+ */
+import { randomUUID } from "node:crypto";
+import * as ed25519 from "@noble/ed25519";
+import { withHandler, sendOk } from "../../_lib/http.ts";
+import { createSession, buildSessionCookie, didWebFor } from "../../_lib/auth.ts";
+import { defaultBaseHost } from "../../_lib/url.ts";
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export default withHandler({
+  POST: async ({ res }) => {
+    const privateKey = ed25519.utils.randomSecretKey();
+    const publicKey = await ed25519.getPublicKeyAsync(privateKey);
+    const publicKeyHex = toHex(publicKey);
+
+    const handle = `anon-${randomUUID().slice(0, 12)}`;
+    const didWeb = didWebFor(defaultBaseHost(), handle);
+
+    const { id, expires } = await createSession(didWeb, {
+      kind: "anonymous",
+      publicKey: publicKeyHex,
+      didWeb,
+    });
+
+    res.setHeader("Set-Cookie", buildSessionCookie(id, expires));
+    sendOk(
+      res,
+      {
+        did_web: didWeb,
+        public_key: publicKeyHex,
+        // Returned exactly once; the caller must store it. Never persisted.
+        private_key: toHex(privateKey),
+      },
+      201,
+    );
+  },
+});

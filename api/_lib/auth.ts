@@ -132,6 +132,18 @@ export function buildSessionCookie(id: string, expires: Date, name = "hh_session
   ].join("; ");
 }
 
+/** Build a Set-Cookie header value that immediately expires a session cookie. */
+export function clearSessionCookie(name = "hh_session"): string {
+  return [
+    `${name}=`,
+    "Path=/",
+    "HttpOnly",
+    "Secure",
+    "SameSite=Lax",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+  ].join("; ");
+}
+
 /** SHA-256 hex digest — used for request hashing and artifact identity. */
 export function sha256Hex(input: string): string {
   return createHash("sha256").update(input).digest("hex");
