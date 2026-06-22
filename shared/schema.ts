@@ -7,10 +7,15 @@
  *   - founder program:         founder_spots, founder_waitlist
  *   - settlement (Stripe):     stripe_accounts, mpp_sessions, checkout_sessions, payouts
  *   - platform plumbing:       webhook_events, idempotency_keys, sessions
+ *   - ARD federation:          federation_referrals, referral_health_log
  *
  * Money is stored in integer cents to avoid floating-point drift. Fees are
  * snapshotted onto work_requests at award time so post-award fee changes never
  * apply retroactively (plan §9.1, §23.11).
+ *
+ * SCHEMA V3 (ARD compliance): did_web → urn_air hard cutover (B.1).
+ *   Identifiers now follow ARD spec §4.2.1: urn:air:<publisher>:<namespace>:<agent-name>
+ *   where <publisher> is a verifiable FQDN (hermeshub.xyz for hosted agents).
  */
 import { sql } from "drizzle-orm";
 import {
@@ -66,23 +71,40 @@ export const capabilities = pgTable(
 /* Agents — worker agents discoverable via ARD                               */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Each agent has an ARD-compliant urn:air identifier and a URL-safe handle used
+ * as the slug at /.well-known/agent-card/<handle>. The publisher_domain field
+ * allows external agents that register their own catalogs to use their own FQDN
+ * as the publisher segment of their URN.
+ *
+ * urn_air format: urn:air:<publisher_domain>:agent:<handle>
+ */
 export const agents = pgTable(
   "agents",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     agentId: uuid("agent_id").notNull().defaultRandom(),
-    didWeb: text("did_web").notNull().unique(),
+    /** ARD v0.9-compliant identifier. Format: urn:air:<publisher_domain>:agent:<handle> */
+    urnAir: text("urn_air").notNull().unique(),
+    /** URL-safe terminal segment of the URN, used as the well-known path slug. */
+    handle: varchar("handle", { length: 120 }).notNull().unique(),
+    /** FQDN of the publisher. Hermeshub-hosted agents use hermeshub.xyz. */
+    publisherDomain: varchar("publisher_domain", { length: 255 }).notNull().default("hermeshub.xyz"),
     name: varchar("name", { length: 255 }).notNull(),
+    bio: text("bio"),
     model: varchar("model", { length: 120 }),
     ownerGithub: varchar("owner_github", { length: 120 }),
     publicKey: text("public_key").notNull(),
     verified: boolean("verified").notNull().default(false),
     trustScore: integer("trust_score").notNull().default(50),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     agentIdIdx: uniqueIndex("idx_agents_agent_id").on(t.agentId),
     ownerGithubIdx: index("idx_agents_owner_github").on(t.ownerGithub),
+    handleIdx: uniqueIndex("idx_agents_handle").on(t.handle),
+    urnAirIdx: uniqueIndex("idx_agents_urn_air").on(t.urnAir),
   }),
 );
 
@@ -122,7 +144,6 @@ export const requesters = pgTable(
   "requesters",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    didWeb: text("did_web").unique(),
     githubId: varchar("github_id", { length: 120 }).unique(),
     email: varchar("email", { length: 320 }),
     name: varchar("name", { length: 255 }),
@@ -237,7 +258,8 @@ export const founder_spots = pgTable(
       .notNull()
       .unique()
       .references(() => agents.id, { onDelete: "cascade" }),
-    didWeb: text("did_web").notNull(),
+    /** urn_air of the claiming agent — identity-bound per spec. */
+    urnAir: text("urn_air").notNull(),
     slotNumber: integer("slot_number").notNull().unique(),
     feeRateBps: integer("fee_rate_bps").notNull().default(150),
     feeFloorCents: integer("fee_floor_cents").notNull().default(60),
@@ -250,7 +272,7 @@ export const founder_spots = pgTable(
   },
   (t) => ({
     statusIdx: index("idx_founder_spots_status").on(t.status),
-    didWebIdx: index("idx_founder_spots_did_web").on(t.didWeb),
+    urnAirIdx: index("idx_founder_spots_urn_air").on(t.urnAir),
   }),
 );
 
@@ -258,7 +280,7 @@ export const founder_waitlist = pgTable(
   "founder_waitlist",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    didWeb: text("did_web").notNull().unique(),
+    urnAir: text("urn_air").notNull().unique(),
     position: integer("position").notNull(),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
     promotedAt: timestamp("promoted_at", { withTimezone: true }),
@@ -428,6 +450,61 @@ export const sessions = pgTable(
 );
 
 /* -------------------------------------------------------------------------- */
+/* ARD Federation — referrals and health log (plan §2.7, B.1)               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Curated list of other ARD-compliant registries that we refer clients to when
+ * they request federation: "referrals". Each row is a catalog entry shape:
+ * identifier (urn:air), displayName, type, url.
+ *
+ * The health-check cron pings each enabled referral and disables those that fail
+ * 3 consecutive checks.
+ */
+export const federation_referrals = pgTable(
+  "federation_referrals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    identifier: text("identifier").notNull().unique(),
+    displayName: text("display_name").notNull(),
+    type: text("type").notNull(),
+    url: text("url").notNull(),
+    description: text("description"),
+    enabled: boolean("enabled").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(100),
+    lastHealthCheck: timestamp("last_health_check", { withTimezone: true }),
+    consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    enabledIdx: index("idx_federation_referrals_enabled").on(t.enabled),
+    sortIdx: index("idx_federation_referrals_sort").on(t.sortOrder),
+  }),
+);
+
+/**
+ * One row per health-check ping against a federation referral. Records the
+ * HTTP status code, round-trip latency, and whether the check succeeded.
+ */
+export const referral_health_log = pgTable(
+  "referral_health_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    referralId: uuid("referral_id")
+      .notNull()
+      .references(() => federation_referrals.id, { onDelete: "cascade" }),
+    checkedAt: timestamp("checked_at", { withTimezone: true }).notNull().defaultNow(),
+    statusCode: integer("status_code"),
+    latencyMs: integer("latency_ms"),
+    success: boolean("success").notNull(),
+  },
+  (t) => ({
+    referralIdx: index("idx_referral_health_log_referral").on(t.referralId),
+    checkedAtIdx: index("idx_referral_health_log_checked_at").on(t.checkedAt),
+  }),
+);
+
+/* -------------------------------------------------------------------------- */
 /* Inferred types                                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -450,3 +527,6 @@ export type Payout = typeof payouts.$inferSelect;
 export type WebhookEvent = typeof webhook_events.$inferSelect;
 export type IdempotencyKey = typeof idempotency_keys.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type FederationReferral = typeof federation_referrals.$inferSelect;
+export type NewFederationReferral = typeof federation_referrals.$inferInsert;
+export type ReferralHealthLog = typeof referral_health_log.$inferSelect;
