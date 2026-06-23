@@ -27,17 +27,17 @@
  *   - Supported filter keys: type, tags, capabilities, "metadata.hermes:founder500"
  */
 import { sql, eq, and, or, ilike, inArray } from "drizzle-orm";
-import { getDb } from "../_lib/db.ts";
+import { getDb } from "../_lib/db";
 import {
   agents,
   agentCapabilities,
   capabilities,
   founder_spots,
   federation_referrals,
-} from "../../shared/schema.ts";
-import { withHandler, parseBody } from "../_lib/http.ts";
-import { defaultBaseHost, baseUrl } from "../_lib/url.ts";
-import { ardError, MEDIA_TYPES } from "../_lib/ard.ts";
+} from "../../shared/schema";
+import { withHandler, parseBody } from "../_lib/http";
+import { defaultBaseHost, baseUrl } from "../_lib/url";
+import { ardError, MEDIA_TYPES } from "../_lib/ard";
 import { z } from "zod";
 
 const searchBodySchema = z.object({

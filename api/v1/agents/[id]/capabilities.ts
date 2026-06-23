@@ -7,12 +7,12 @@
  * upsert the claim (re-declaring updates price/SLA/sandbox).
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../../_lib/db.ts";
-import { agentCapabilities, capabilities } from "../../../../shared/schema.ts";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http.ts";
-import { declareCapabilitySchema } from "../../../_lib/validate.ts";
-import { requireAgent } from "../../../_lib/entities.ts";
-import { verifyEd25519, canonicalize } from "../../../_lib/auth.ts";
+import { getDb } from "../../../_lib/db";
+import { agentCapabilities, capabilities } from "../../../../shared/schema";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http";
+import { declareCapabilitySchema } from "../../../_lib/validate";
+import { requireAgent } from "../../../_lib/entities";
+import { verifyEd25519, canonicalize } from "../../../_lib/auth";
 
 const SIG_MAX_SKEW_MS = 5 * 60 * 1000; // 5 minutes
 

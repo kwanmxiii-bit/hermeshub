@@ -3,8 +3,8 @@
  *
  * Idempotent: succeeds whether or not a valid session cookie is present.
  */
-import { withHandler, sendOk } from "../../_lib/http.ts";
-import { destroySession, readSessionCookie, clearSessionCookie } from "../../_lib/auth.ts";
+import { withHandler, sendOk } from "../../_lib/http";
+import { destroySession, readSessionCookie, clearSessionCookie } from "../../_lib/auth";
 
 export default withHandler({
   POST: async ({ req, res }) => {

@@ -9,11 +9,11 @@
  * rather than being remunerable units).
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db.ts";
-import { capabilities } from "../../../shared/schema.ts";
-import { withHandler } from "../../_lib/http.ts";
-import { buildCapabilityRegistry } from "../../_lib/ard.ts";
-import { defaultBaseHost } from "../../_lib/url.ts";
+import { getDb } from "../../_lib/db";
+import { capabilities } from "../../../shared/schema";
+import { withHandler } from "../../_lib/http";
+import { buildCapabilityRegistry } from "../../_lib/ard";
+import { defaultBaseHost } from "../../_lib/url";
 
 export default withHandler({
   GET: async ({ res }) => {

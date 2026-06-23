@@ -9,9 +9,9 @@
  */
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
-import { getStripe } from "./stripe.ts";
-import { getDb } from "./db.ts";
-import { webhook_events } from "../../shared/schema.ts";
+import { getStripe } from "./stripe";
+import { getDb } from "./db";
+import { webhook_events } from "../../shared/schema";
 
 /**
  * Verify a raw webhook body + signature header. Throws on failure so the route

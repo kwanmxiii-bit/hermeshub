@@ -4,9 +4,9 @@
  * Body: { title, brief }. Returns `{ suggestions: [{ uri, confidence,
  * leaf_name, domain }] }` ranked by keyword overlap. No persistence, no money.
  */
-import { withHandler, sendOk, parseBody } from "../../_lib/http.ts";
-import { autosuggestSchema } from "../../_lib/validate.ts";
-import { suggestCapabilities } from "../../_lib/suggest.ts";
+import { withHandler, sendOk, parseBody } from "../../_lib/http";
+import { autosuggestSchema } from "../../_lib/validate";
+import { suggestCapabilities } from "../../_lib/suggest";
 
 export default withHandler({
   POST: async ({ req, res }) => {

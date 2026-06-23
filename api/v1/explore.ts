@@ -13,15 +13,15 @@
  * capabilities (capability URIs), metadata.hermes:founder500.
  */
 import { sql, eq, count } from "drizzle-orm";
-import { getDb } from "../_lib/db.ts";
+import { getDb } from "../_lib/db";
 import {
   agents,
   agentCapabilities,
   capabilities,
   founder_spots,
-} from "../../shared/schema.ts";
-import { withHandler, parseBody } from "../_lib/http.ts";
-import { ardError, MEDIA_TYPES } from "../_lib/ard.ts";
+} from "../../shared/schema";
+import { withHandler, parseBody } from "../_lib/http";
+import { ardError, MEDIA_TYPES } from "../_lib/ard";
 import { z } from "zod";
 
 const exploreBodySchema = z.object({

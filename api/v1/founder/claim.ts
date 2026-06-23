@@ -11,10 +11,10 @@
  *
  * v3 change: identity is bound to urn_air (not did_web).
  */
-import { withTransaction } from "../../_lib/pg.ts";
-import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http.ts";
-import { founderClaimSchema } from "../../_lib/validate.ts";
-import { requireAgent } from "../../_lib/entities.ts";
+import { withTransaction } from "../../_lib/pg";
+import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http";
+import { founderClaimSchema } from "../../_lib/validate";
+import { requireAgent } from "../../_lib/entities";
 
 const OPEN_TIER_MAX = 400;
 const TOTAL_SLOTS = 500;

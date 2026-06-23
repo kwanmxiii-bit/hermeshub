@@ -11,19 +11,19 @@
  * retroactively, flip status to `awarded`, and record the winning bid.
  */
 import { eq, and } from "drizzle-orm";
-import { getDb } from "../../../_lib/db.ts";
-import { bids, work_requests } from "../../../../shared/schema.ts";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http.ts";
-import { awardSchema } from "../../../_lib/validate.ts";
-import { requireWork } from "../../../_lib/entities.ts";
-import { resolveFee } from "../../../_lib/fee.ts";
+import { getDb } from "../../../_lib/db";
+import { bids, work_requests } from "../../../../shared/schema";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http";
+import { awardSchema } from "../../../_lib/validate";
+import { requireWork } from "../../../_lib/entities";
+import { resolveFee } from "../../../_lib/fee";
 import {
   getStripeAccountForAgent,
   syncStripeAccountFlags,
   requirementsDue,
-} from "../../../_lib/stripe-accounts.ts";
-import { retrieveAccount, createAccountLink } from "../../../_lib/stripe.ts";
-import { absoluteUrl } from "../../../_lib/url.ts";
+} from "../../../_lib/stripe-accounts";
+import { retrieveAccount, createAccountLink } from "../../../_lib/stripe";
+import { absoluteUrl } from "../../../_lib/url";
 
 export default withHandler({
   POST: async ({ req, res }) => {

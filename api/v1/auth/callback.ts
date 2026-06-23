@@ -7,17 +7,17 @@
  * 503 if OAuth isn't configured.
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db.ts";
-import { requesters } from "../../../shared/schema.ts";
-import { withHandler, param, ApiError } from "../../_lib/http.ts";
+import { getDb } from "../../_lib/db";
+import { requesters } from "../../../shared/schema";
+import { withHandler, param, ApiError } from "../../_lib/http";
 import {
   createSession,
   getSession,
   destroySession,
   buildSessionCookie,
   readSessionCookie,
-} from "../../_lib/auth.ts";
-import { absoluteUrl } from "../../_lib/url.ts";
+} from "../../_lib/auth";
+import { absoluteUrl } from "../../_lib/url";
 
 interface GitHubUser {
   id: number;
