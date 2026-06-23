@@ -24,7 +24,7 @@ import {
   work_requests,
   founder_spots,
   capabilities,
-} from "../shared/schema.ts";
+} from "../shared/schema";
 
 const PUBLISHER_DOMAIN = "hermeshub.xyz";
 

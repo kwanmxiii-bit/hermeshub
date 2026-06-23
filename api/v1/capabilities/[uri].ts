@@ -6,9 +6,9 @@
  * that declare it.
  */
 import { eq, sql } from "drizzle-orm";
-import { getDb } from "../../_lib/db.ts";
-import { capabilities, agentCapabilities } from "../../../shared/schema.ts";
-import { withHandler, sendOk, param, ApiError } from "../../_lib/http.ts";
+import { getDb } from "../../_lib/db";
+import { capabilities, agentCapabilities } from "../../../shared/schema";
+import { withHandler, sendOk, param, ApiError } from "../../_lib/http";
 
 export default withHandler({
   GET: async ({ req, res }) => {

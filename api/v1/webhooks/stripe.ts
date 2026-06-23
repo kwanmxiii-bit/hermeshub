@@ -15,7 +15,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db.ts";
+import { getDb } from "../../_lib/db";
 import {
   checkout_sessions,
   mpp_sessions,
@@ -23,11 +23,11 @@ import {
   work_requests,
   stripe_accounts,
   webhook_events,
-} from "../../../shared/schema.ts";
-import { readRawBody } from "../../_lib/http.ts";
-import { constructEvent, recordEvent, markProcessed } from "../../_lib/webhook.ts";
-import { syncStripeAccountFlags } from "../../_lib/stripe-accounts.ts";
-import { log } from "../../_lib/log.ts";
+} from "../../../shared/schema";
+import { readRawBody } from "../../_lib/http";
+import { constructEvent, recordEvent, markProcessed } from "../../_lib/webhook";
+import { syncStripeAccountFlags } from "../../_lib/stripe-accounts";
+import { log } from "../../_lib/log";
 
 export const config = { api: { bodyParser: false } };
 

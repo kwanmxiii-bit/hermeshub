@@ -6,11 +6,11 @@
  * Founder-500 spot (slot 1–500). This is enforced via the requireFounderSession()
  * helper which checks the session → agent → founder_spots chain.
  */
-import { getDb } from "../../../_lib/db.ts";
-import { federation_referrals, founder_spots } from "../../../../shared/schema.ts";
-import { withHandler, sendOk, parseBody, ApiError } from "../../../_lib/http.ts";
-import { ardError } from "../../../_lib/ard.ts";
-import { getSession, readSessionCookie } from "../../../_lib/auth.ts";
+import { getDb } from "../../../_lib/db";
+import { federation_referrals, founder_spots } from "../../../../shared/schema";
+import { withHandler, sendOk, parseBody, ApiError } from "../../../_lib/http";
+import { ardError } from "../../../_lib/ard";
+import { getSession, readSessionCookie } from "../../../_lib/auth";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { VercelRequest, VercelResponse } from "@vercel/node";

@@ -11,7 +11,7 @@
  *   - Handle (handle column) — e.g. lumen-cut
  */
 import { eq, or } from "drizzle-orm";
-import { getDb } from "./db.ts";
+import { getDb } from "./db";
 import {
   agents,
   requesters,
@@ -19,8 +19,8 @@ import {
   type Agent,
   type Requester,
   type WorkRequest,
-} from "../../shared/schema.ts";
-import { ApiError } from "./http.ts";
+} from "../../shared/schema";
+import { ApiError } from "./http";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const URN_AIR_RE = /^urn:air:/i;

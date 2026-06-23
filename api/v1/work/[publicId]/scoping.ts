@@ -6,11 +6,11 @@
  * `messages` jsonb array. Returns the updated thread.
  */
 import { eq, and, sql } from "drizzle-orm";
-import { getDb } from "../../../_lib/db.ts";
-import { scoping_threads } from "../../../../shared/schema.ts";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http.ts";
-import { scopingSchema } from "../../../_lib/validate.ts";
-import { requireWork } from "../../../_lib/entities.ts";
+import { getDb } from "../../../_lib/db";
+import { scoping_threads } from "../../../../shared/schema";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http";
+import { scopingSchema } from "../../../_lib/validate";
+import { requireWork } from "../../../_lib/entities";
 
 export default withHandler({
   POST: async ({ req, res }) => {

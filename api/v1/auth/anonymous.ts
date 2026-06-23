@@ -8,9 +8,9 @@
  */
 import { randomUUID } from "node:crypto";
 import * as ed25519 from "@noble/ed25519";
-import { withHandler, sendOk } from "../../_lib/http.ts";
-import { createSession, buildSessionCookie, buildUrnAirFor } from "../../_lib/auth.ts";
-import { defaultBaseHost } from "../../_lib/url.ts";
+import { withHandler, sendOk } from "../../_lib/http";
+import { createSession, buildSessionCookie, buildUrnAirFor } from "../../_lib/auth";
+import { defaultBaseHost } from "../../_lib/url";
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");

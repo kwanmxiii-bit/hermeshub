@@ -8,15 +8,15 @@
  * payability flags (so the UI can show onboarding state).
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db.ts";
+import { getDb } from "../../_lib/db";
 import {
   agentCapabilities,
   capabilities,
   founder_spots,
   stripe_accounts,
-} from "../../../shared/schema.ts";
-import { withHandler, sendOk, param, ApiError } from "../../_lib/http.ts";
-import { requireAgent } from "../../_lib/entities.ts";
+} from "../../../shared/schema";
+import { withHandler, sendOk, param, ApiError } from "../../_lib/http";
+import { requireAgent } from "../../_lib/entities";
 
 export default withHandler({
   GET: async ({ req, res }) => {

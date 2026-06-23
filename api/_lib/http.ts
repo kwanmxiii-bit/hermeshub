@@ -14,8 +14,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { applyCors } from "./cors.ts";
-import { log } from "./log.ts";
+import { applyCors } from "./cors";
+import { log } from "./log";
 
 export type ErrorCode =
   | "VALIDATION"

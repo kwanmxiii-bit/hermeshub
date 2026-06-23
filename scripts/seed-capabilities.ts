@@ -12,13 +12,13 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { sql } from "drizzle-orm";
-import { capabilities } from "../shared/schema.ts";
+import { capabilities } from "../shared/schema";
 import {
   buildTaxonomy,
   buildQualifiers,
   HCT_SPEC_VERSION,
   type CapabilityNode,
-} from "../shared/ard-taxonomy.ts";
+} from "../shared/ard-taxonomy";
 
 function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;

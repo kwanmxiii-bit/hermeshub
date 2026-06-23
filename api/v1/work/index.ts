@@ -8,12 +8,12 @@
  */
 import { randomBytes } from "node:crypto";
 import { and, eq, or, ilike, sql, lt } from "drizzle-orm";
-import { getDb } from "../../_lib/db.ts";
-import { work_requests } from "../../../shared/schema.ts";
-import { withHandler, sendOk, param, intParam, parseBody, ApiError } from "../../_lib/http.ts";
-import { createWorkSchema } from "../../_lib/validate.ts";
-import { upsertRequesterByDid } from "../../_lib/entities.ts";
-import { suggestCapabilities } from "../../_lib/suggest.ts";
+import { getDb } from "../../_lib/db";
+import { work_requests } from "../../../shared/schema";
+import { withHandler, sendOk, param, intParam, parseBody, ApiError } from "../../_lib/http";
+import { createWorkSchema } from "../../_lib/validate";
+import { upsertRequesterByDid } from "../../_lib/entities";
+import { suggestCapabilities } from "../../_lib/suggest";
 
 function newPublicId(): string {
   // 12 url-safe chars, base32-ish from random bytes.
